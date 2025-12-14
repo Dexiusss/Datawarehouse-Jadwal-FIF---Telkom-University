@@ -228,7 +228,7 @@ if is_connected and engine:
             DIM_WAKTU ||--|{ FACT_TABLE : "terjadi_pada"
         """
         render_mermaid(schema_diagram)
-
+        
     # === TAB 4: INFO STRUKTUR ===
     with tab4:
         st.markdown("""
@@ -246,4 +246,5 @@ if is_connected and engine:
 
 else:
     st.info("Silakan hubungkan database di sidebar sebelah kiri.")
+
 
