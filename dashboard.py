@@ -23,6 +23,7 @@ def render_mermaid(code):
     """
     components.html(html_code, height=600, scrolling=True)
 
+
 # --- SIDEBAR: KONEKSI DATABASE ---
 st.sidebar.header("Koneksi Database")
 
@@ -78,7 +79,7 @@ if is_connected and engine:
         selected_sem = None
 
     # Tab Navigasi
-    tab1, tab2, tab3, tab4 = st.tabs(["Visualisasi Metrik", "SQL Terminal", "Star Schema", "nfo"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Visualisasi Metrik", "SQL Terminal", "Star Schema", "Info"])
 
     # === TAB 1: VISUALISASI METRIK ===
     with tab1:
@@ -173,10 +174,10 @@ if is_connected and engine:
             except Exception as e:
                 st.error(f"Error: {e}")
 
-    # === TAB 3: STAR SCHEMA (FIXED SYNTAX) ===
+    # === TAB 3: STAR SCHEMA ===
     with tab3:
         st.header("Visualisasi Star Schema")
-        diagram_code = """
+        schema_diagram = """
         erDiagram
             FACT_TABLE {
                 int id_dosen FK
@@ -197,7 +198,7 @@ if is_connected and engine:
                 int id_mk PK
                 string kode_mk
                 string nama_mk
-                string jenis_mk
+                string jenis_matakuliah
                 int sks
             }
             DIM_RUANGAN {
@@ -220,13 +221,13 @@ if is_connected and engine:
                 string jam_mulai
             }
 
-            DIM_DOSEN ||--|{ FACT_TABLE : mengajar
-            DIM_MATAKULIAH ||--|{ FACT_TABLE : memiliki
-            DIM_RUANGAN ||--|{ FACT_TABLE : ditempati
-            DIM_KELAS ||--|{ FACT_TABLE : menghadiri
-            DIM_WAKTU ||--|{ FACT_TABLE : terjadi_pada
+            DIM_DOSEN ||--|{ FACT_TABLE : "mengajar"
+            DIM_MATAKULIAH ||--|{ FACT_TABLE : "memiliki"
+            DIM_RUANGAN ||--|{ FACT_TABLE : "ditempati"
+            DIM_KELAS ||--|{ FACT_TABLE : "menghadiri"
+            DIM_WAKTU ||--|{ FACT_TABLE : "terjadi_pada"
         """
-        render_mermaid(diagram_code)
+        render_mermaid(schema_diagram)
 
     # === TAB 4: INFO STRUKTUR ===
     with tab4:
@@ -245,3 +246,4 @@ if is_connected and engine:
 
 else:
     st.info("Silakan hubungkan database di sidebar sebelah kiri.")
+
