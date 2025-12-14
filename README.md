@@ -1,3 +1,3 @@
-Full Dashboard
+*Full Dashboard*
 
-https://github.com/Dexiusss/Datawarehouse-Jadwal-FIF---Telkom-University
+https://datawarehouse-jadwal-fif-telkom-university.streamlit.app
