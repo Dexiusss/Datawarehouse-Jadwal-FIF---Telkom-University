@@ -81,7 +81,6 @@ if is_connected and engine:
     # Tab Navigasi
     tab1, tab2, tab3, tab4 = st.tabs(["Visualisasi Metrik", "SQL Terminal", "Star Schema", "Info"])
 
-    # === TAB 1: VISUALISASI METRIK ===
     # === TAB 1: VISUALISASI ===
     with tab1:
         if selected_ta and selected_sem:
@@ -89,25 +88,34 @@ if is_connected and engine:
             
             col1, col2 = st.columns(2)
             
-            # --- CHART 1: Beban SKS Dosen ---
+    # --- CHART 1: Beban SKS Dosen ---
             with col1:
                 st.subheader("Top 10 Dosen (Total SKS)")
-                # [UPDATE] Menambahkan JOIN ke dim_matakuliah dan FILTER jenis_matakuliah != 'RESPONSI'
+                st.caption("Total SKS dari mata kuliah unik (TETAP) yang diajar.")
                 query_dosen = text("""
                 SELECT 
                     d.nama_dosen, 
-                    SUM(f.beban_sks_dosen) as total_sks
-                FROM fact_table f
-                JOIN dim_dosen d ON f.id_dosen = d.id_dosen
-                JOIN dim_waktu w ON f.id_waktu = w.id_waktu
-                JOIN dim_matakuliah mk ON f.id_mk = mk.id_mk
-                WHERE w.tahun_ajaran = :ta 
-                  AND w.semester = :sem
-                  AND mk.jenis_matakuliah = 'TETAP'
+                    SUM(unik.sks) as total_sks
+                FROM (
+                    -- Subquery: Ambil kombinasi unik (Dosen + MK + Kelas)
+                    SELECT DISTINCT 
+                        f.id_dosen,
+                        f.id_mk,
+                        f.id_kelas,
+                        mk.sks
+                    FROM fact_table f
+                    JOIN dim_waktu w ON f.id_waktu = w.id_waktu
+                    JOIN dim_matakuliah mk ON f.id_mk = mk.id_mk
+                    WHERE w.tahun_ajaran = :ta 
+                      AND w.semester = :sem
+                      AND mk.jenis_matakuliah = 'TETAP' -- Sesuaikan dengan data ('REGULER'/'TETAP')
+                ) unik
+                JOIN dim_dosen d ON unik.id_dosen = d.id_dosen
                 GROUP BY d.nama_dosen
                 ORDER BY total_sks DESC
                 LIMIT 10;
                 """)
+                
                 try:
                     df_dosen = pd.read_sql(query_dosen, engine, params={"ta": selected_ta, "sem": selected_sem})
                     if not df_dosen.empty:
@@ -117,7 +125,7 @@ if is_connected and engine:
                     else:
                         st.info("Tidak ada data untuk periode ini.")
                 except Exception as e: st.error(f"Error query dosen: {e}")
-
+                    
             # CHART 2: Kesibukan Hari
             with col2:
                 st.subheader("Pola Kesibukan Harian")
@@ -254,6 +262,7 @@ if is_connected and engine:
 
 else:
     st.info("Silakan hubungkan database di sidebar sebelah kiri.")
+
 
 
 
