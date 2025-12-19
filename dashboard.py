@@ -82,36 +82,41 @@ if is_connected and engine:
     tab1, tab2, tab3, tab4 = st.tabs(["Visualisasi Metrik", "SQL Terminal", "Star Schema", "Info"])
 
     # === TAB 1: VISUALISASI METRIK ===
+    # === TAB 1: VISUALISASI ===
     with tab1:
         if selected_ta and selected_sem:
             st.header(f"Analisis: {selected_ta} - {selected_sem}")
+            
             col1, col2 = st.columns(2)
             
-            # CHART 1: Beban SKS Dosen
+            # --- CHART 1: Beban SKS Dosen ---
             with col1:
                 st.subheader("Top 10 Dosen (Total SKS)")
-                # Menggunakan parameter binding (:ta, :sem) agar aman dari SQL Injection
-                q_dosen = text("""
+                # [UPDATE] Menambahkan JOIN ke dim_matakuliah dan FILTER jenis_matakuliah != 'RESPONSI'
+                query_dosen = text("""
                 SELECT 
                     d.nama_dosen, 
                     SUM(f.beban_sks_dosen) as total_sks
                 FROM fact_table f
                 JOIN dim_dosen d ON f.id_dosen = d.id_dosen
                 JOIN dim_waktu w ON f.id_waktu = w.id_waktu
-                WHERE w.tahun_ajaran = :ta AND w.semester = :sem
+                JOIN dim_matakuliah mk ON f.id_mk = mk.id_mk
+                WHERE w.tahun_ajaran = :ta 
+                  AND w.semester = :sem
+                  AND mk.jenis_matakuliah != 'RESPONSI' -- Filter hanya matkul Tetap/Reguler
                 GROUP BY d.nama_dosen
                 ORDER BY total_sks DESC
                 LIMIT 10;
                 """)
                 try:
-                    df_dosen = pd.read_sql(q_dosen, engine, params={"ta": selected_ta, "sem": selected_sem})
+                    df_dosen = pd.read_sql(query_dosen, engine, params={"ta": selected_ta, "sem": selected_sem})
                     if not df_dosen.empty:
-                        fig = px.bar(df_dosen, x='nama_dosen', y='total_sks', 
-                                     labels={'total_sks': 'SKS', 'nama_dosen': 'Dosen'}, text_auto=True)
-                        st.plotly_chart(fig, use_container_width=True)
+                        fig_dosen = px.bar(df_dosen, x='nama_dosen', y='total_sks', color='total_sks',
+                                           labels={'total_sks': 'SKS', 'nama_dosen': 'Nama Dosen'}, text_auto=True)
+                        st.plotly_chart(fig_dosen, use_container_width=True)
                     else:
-                        st.info("Data kosong.")
-                except Exception as e: st.error(f"Error: {e}")
+                        st.info("Tidak ada data untuk periode ini.")
+                except Exception as e: st.error(f"Error query dosen: {e}")
 
             # CHART 2: Kesibukan Hari
             with col2:
@@ -249,6 +254,7 @@ if is_connected and engine:
 
 else:
     st.info("Silakan hubungkan database di sidebar sebelah kiri.")
+
 
 
 
